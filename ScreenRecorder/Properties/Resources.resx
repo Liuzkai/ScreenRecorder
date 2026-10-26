@@ -258,4 +258,10 @@
   <data name="RecordDelay" xml:space="preserve">
     <value>Start Delay (sec)</value>
   </data>
+  <data name="RegionEditHint" xml:space="preserve"><value>Drag outside to draw, drag inside to move. Double-click or Enter to confirm; Esc to cancel.</value></data>
+  <data name="RegionWidth" xml:space="preserve"><value>Width</value></data>
+  <data name="RegionHeight" xml:space="preserve"><value>Height</value></data>
+  <data name="RegionApplySize" xml:space="preserve"><value>Apply size</value></data>
+  <data name="RegionConfirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="RegionSizeRange" xml:space="preserve"><value>Enter whole pixels: width {0}–{1}, height {0}–{2}.</value></data>
 </root>

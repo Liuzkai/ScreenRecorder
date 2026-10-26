@@ -258,4 +258,10 @@
   <data name="RecordDelay" xml:space="preserve">
     <value>녹화 지연 (초)</value>
   </data>
+  <data name="RegionEditHint" xml:space="preserve"><value>바깥을 드래그하여 새 영역 선택, 안쪽을 드래그하여 이동. 더블 클릭 또는 Enter로 확인, Esc로 취소.</value></data>
+  <data name="RegionWidth" xml:space="preserve"><value>너비</value></data>
+  <data name="RegionHeight" xml:space="preserve"><value>높이</value></data>
+  <data name="RegionApplySize" xml:space="preserve"><value>크기 적용</value></data>
+  <data name="RegionConfirm" xml:space="preserve"><value>확인</value></data>
+  <data name="RegionSizeRange" xml:space="preserve"><value>픽셀 단위 정수 입력: 너비 {0}–{1}, 높이 {0}–{2}.</value></data>
 </root>

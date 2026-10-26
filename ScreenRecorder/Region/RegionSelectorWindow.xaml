@@ -112,5 +112,23 @@
                 </Border>
             </Grid>
         </Canvas>
+        <Border x:Name="regionEditor" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                Margin="8,8,8,24" Padding="12" Background="#212121" CornerRadius="5" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="{x:Static properties:Resources.RegionEditHint}" Foreground="White" Margin="0,0,0,8" TextWrapping="Wrap" MaxWidth="440" />
+                <WrapPanel VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static properties:Resources.RegionWidth}" Foreground="White" VerticalAlignment="Center" />
+                    <TextBox x:Name="regionWidth" Width="64" Margin="6,0" TextChanged="RegionSize_TextChanged"
+                             ToolTip="{x:Static properties:Resources.RegionWidth}" />
+                    <TextBlock Text="×" Foreground="White" VerticalAlignment="Center" />
+                    <TextBox x:Name="regionHeight" Width="64" Margin="6,0" TextChanged="RegionSize_TextChanged"
+                             ToolTip="{x:Static properties:Resources.RegionHeight}" />
+                    <TextBlock Text="px" Foreground="White" VerticalAlignment="Center" />
+                    <Button x:Name="applyRegionSize" Content="{x:Static properties:Resources.RegionApplySize}" Click="ApplyRegionSize_Click" Margin="10,0,4,0" Padding="8,3" />
+                    <Button x:Name="confirmRegion" Content="{x:Static properties:Resources.RegionConfirm}" Click="ConfirmRegion_Click" Padding="8,3" />
+                </WrapPanel>
+                <TextBlock x:Name="regionSizeError" Foreground="#FFCC80" Margin="0,6,0,0" TextWrapping="Wrap" MaxWidth="440" />
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

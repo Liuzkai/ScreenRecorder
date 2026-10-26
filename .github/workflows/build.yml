@@ -1,0 +1,121 @@
+name: Windows Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Windows x64 packages
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Read application version
+        id: version
+        run: |
+          [xml]$project = Get-Content -LiteralPath 'ScreenRecorder/ScreenRecorder.csproj'
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Expected an X.Y.Z application version; got '$version'."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Fetch and verify FFmpeg shared libraries
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'ffmpeg-8.1.zip'
+          $unpacked = Join-Path $env:RUNNER_TEMP 'ffmpeg-8.1'
+          Invoke-WebRequest -Uri 'https://github.com/GyanD/codexffmpeg/releases/download/8.1/ffmpeg-8.1-full_build-shared.zip' -OutFile $archive
+          # SHA256 published with the upstream GitHub release asset.
+          $expected = 'e184e012ca9a3527ed45d61f8e250c50b07b8661d90849820ea754239049efb4'
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne $expected) {
+            throw 'FFmpeg archive checksum mismatch.'
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
+          $bin = Join-Path $unpacked 'ffmpeg-8.1-full_build-shared/bin'
+          $destination = 'Externals/ffmpeg/win-x64'
+          New-Item -ItemType Directory -Force $destination | Out-Null
+          foreach ($name in 'avcodec-62', 'avformat-62', 'avutil-60', 'swresample-6', 'swscale-9') {
+            Copy-Item -LiteralPath (Join-Path $bin "$name.dll") -Destination $destination
+          }
+
+      - name: Run region regression checks
+        run: dotnet run --project ScreenRecorder.RegionTests/ScreenRecorder.RegionTests.csproj -c Release
+
+      - name: Build solution
+        run: dotnet build ScreenRecorder.sln -c Release
+
+      - name: Run software encoder smoke test
+        run: |
+          dotnet run --project ScreenRecorder.EncoderHarness/ScreenRecorder.EncoderHarness.csproj -c Release --no-build -- --hw sw --seconds 1 --w 640 --h 320 --out "$env:RUNNER_TEMP/encoder-smoke.mp4"
+
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
+      - name: Build installer and portable package
+        shell: cmd
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+        run: call Installers\build_setup.bat %BUILD_VERSION%
+
+      - name: Verify packages and write checksums
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = "dist/ScreenRecorder_Setup_v$env:BUILD_VERSION.exe"
+          $portable = "dist/ScreenRecorder_v$env:BUILD_VERSION`_Portable.zip"
+          foreach ($path in $installer, $portable) {
+            if (-not (Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -eq 0) {
+              throw "Missing or empty package: $path"
+            }
+          }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $portable).Path)
+          try {
+            $entries = @($zip.Entries.FullName)
+            foreach ($name in 'ScreenRecorder.exe', 'ScreenRecorder.dll', 'ScreenRecorder.Engine.dll', 'portable', 'coreclr.dll', 'PresentationFramework.dll', 'avcodec-62.dll', 'avformat-62.dll', 'avutil-60.dll', 'swresample-6.dll', 'swscale-9.dll') {
+              if ($entries -notcontains $name) { throw "Portable package is missing $name" }
+            }
+          } finally {
+            $zip.Dispose()
+          }
+          if (Test-Path -LiteralPath 'publish/x64/portable') {
+            throw 'The portable marker must not be included in the installer input.'
+          }
+          $checksums = foreach ($path in $installer, $portable) {
+            $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $(Split-Path -Path $path -Leaf)"
+          }
+          $checksums | Set-Content -LiteralPath 'dist/SHA256SUMS.txt' -Encoding ascii
+
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenRecorder-win-x64-${{ github.run_number }}
+          path: |
+            dist/ScreenRecorder_Setup_v*.exe
+            dist/ScreenRecorder_v*_Portable.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

@@ -34,6 +34,8 @@
 - 사용자가 직접 영역을 지정하여 녹화가 가능합니다.
   - 다음과 같은 영역 지정 옵션이 존재합니다:
     - 사각 영역 지정, 윈도우 영역 지정, 디스플레이 영역 지정
+  - 사각 영역은 바깥을 드래그하여 새로 선택하고, 안쪽을 드래그하여 이동하거나 너비/높이를 실제 픽셀 단위(최소 100 × 100)로 입력할 수 있습니다. 크기 적용 후 확인 버튼, Enter 또는 영역 안쪽 더블 클릭으로 확정하며 Esc로 취소합니다. 크기 입력란에서 Enter는 크기만 적용합니다.
+  - 마지막으로 확정한 사각 영역의 모니터, 위치와 크기는 재시작 후에도 복원됩니다. 처음에는 화면 중앙의 640 × 320 영역을 사용하며, 모니터나 해상도가 바뀌면 화면 안에 맞춥니다.
 - 핫키를 이용한 녹화 기능.
 - 마이크 녹음기능 (시스템 기본 캡쳐 장치를 녹음합니다)
 - 기본적으로 녹화 프레임 레이트는 60 fps로 녹화됩니다.
@@ -70,6 +72,14 @@ dotnet run --project ScreenRecorder/ScreenRecorder.csproj
 # 설치 프로그램 빌드 (publish + NSIS) — NSIS(makensis) 필요
 Installers\build_setup.bat 2.0.0
 ```
+
+### Windows 패키지 자동 빌드
+
+GitHub Actions의 **Windows Build** 워크플로는 브랜치 푸시, 풀 리퀘스트, 수동 **Run workflow** 실행 시 동작합니다. 영역 로직과 소프트웨어 인코더를 검사한 뒤 `ScreenRecorder/ScreenRecorder.csproj`의 버전으로 런타임이 포함된 Windows x64 설치 프로그램과 포터블 ZIP을 빌드합니다.
+
+성공한 실행의 **Actions → Windows Build → 해당 실행 → Artifacts**에서 `ScreenRecorder-win-x64-<실행 번호>`를 받으세요. `ScreenRecorder_Setup_v<버전>.exe`, `ScreenRecorder_v<버전>_Portable.zip`, `SHA256SUMS.txt`가 포함되며 14일간 보관됩니다. 일반 빌드에는 추가 저장소 시크릿이 필요하지 않습니다.
+
+기존 **Release** 워크플로는 `X.Y.Z` 태그 푸시 시 GitHub Release를 게시합니다. winget 등록에는 기존 `WINGET_TOKEN` 시크릿이 필요합니다.
 
 ## 📦 서드 파티 라이브러리
 - FFmpeg: https://www.ffmpeg.org/ ([FFmpeg.AutoGen](https://github.com/Ruslan-B/FFmpeg.AutoGen) 경유)

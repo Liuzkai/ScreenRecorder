@@ -34,6 +34,8 @@ It is a simple recording program with the ability to record the screen.
 - Record by specifying an region by the user
   - You have the following selection options:
     - Capture Region, Capture Window, Capture Display
+  - Custom regions support dragging to draw, dragging inside the frame to move, and entering width/height in physical pixels (minimum 100 × 100). Apply the size, then confirm with the button, Enter, or a double-click inside the frame; Esc cancels. Enter in a size field only applies the size.
+  - The last confirmed custom region's monitor, position and size are restored, including after restarting. First use defaults to a centered 640 × 320 frame; saved regions are fitted to the available display if the monitor or resolution changes.
 - Recording function using hotkeys.
 - Microphone recording function (Record system default capture device)
 - By default, the recording frame rate is 60 fps.
@@ -70,6 +72,14 @@ dotnet run --project ScreenRecorder/ScreenRecorder.csproj
 # Build the installer (publish + NSIS) — requires NSIS (makensis)
 Installers\build_setup.bat 2.0.0
 ```
+
+### Automated Windows packages
+
+The **Windows Build** GitHub Actions workflow runs on branch pushes, pull requests, and manual **Run workflow** requests. It checks the region logic and software encoder, then builds a self-contained Windows x64 installer and portable ZIP using the version in `ScreenRecorder/ScreenRecorder.csproj`.
+
+After a successful run, open **Actions → Windows Build → the run → Artifacts** and download `ScreenRecorder-win-x64-<run number>`. It contains `ScreenRecorder_Setup_v<version>.exe`, `ScreenRecorder_v<version>_Portable.zip`, and `SHA256SUMS.txt`. Artifacts are retained for 14 days. No additional repository secrets are needed for these builds.
+
+The existing **Release** workflow still publishes a GitHub Release when an `X.Y.Z` tag is pushed; its winget submission requires the existing `WINGET_TOKEN` secret.
 
 ## 📦 Third party libraries
 - FFmpeg: https://www.ffmpeg.org/ (via [FFmpeg.AutoGen](https://github.com/Ruslan-B/FFmpeg.AutoGen))

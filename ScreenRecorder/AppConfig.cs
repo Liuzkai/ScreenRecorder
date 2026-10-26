@@ -87,6 +87,8 @@ namespace ScreenRecorder
 
                 config.Add(nameof(RecordDirectory), RecordDirectory);
                 config.Add(nameof(RegionSelectionMode), Enum.GetName(typeof(RegionSelectionMode), RegionSelectionMode));
+                config.Add(nameof(LastUserRegionDevice), LastUserRegionDevice);
+                config.Add(nameof(LastUserRegion), LastUserRegion);
 
                 config.Add(nameof(RecordMicrophone), RecordMicrophone.ToString());
 
@@ -122,6 +124,8 @@ namespace ScreenRecorder
                     SelectedRecordDelay = Config.Config.GetInt32(config, nameof(SelectedRecordDelay), 0);
                     RecordDirectory = Config.Config.GetString(config, nameof(RecordDirectory), Environment.GetFolderPath(Environment.SpecialFolder.MyVideos));
                     RegionSelectionMode = Config.Config.GetEnum<RegionSelectionMode>(config, nameof(RegionSelectionMode), RegionSelectionMode.UserRegion);
+                    LastUserRegionDevice = Config.Config.GetString(config, nameof(LastUserRegionDevice), "");
+                    LastUserRegion = Config.Config.GetString(config, nameof(LastUserRegion), "");
 
                     RecordMicrophone = Config.Config.GetBool(config, nameof(RecordMicrophone), false);
 
@@ -157,6 +161,8 @@ namespace ScreenRecorder
             SelectedRecordDelay = 0;
             RecordDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
             RegionSelectionMode = RegionSelectionMode.UserRegion;
+            LastUserRegionDevice = "";
+            LastUserRegion = "";
 
             RecordMicrophone = false;
         }
@@ -363,6 +369,20 @@ namespace ScreenRecorder
             set => SetProperty(ref _recordDirectory, value);
         }
 
+
+        private string _lastUserRegionDevice = "";
+        public string LastUserRegionDevice
+        {
+            get => _lastUserRegionDevice;
+            set => SetProperty(ref _lastUserRegionDevice, value);
+        }
+
+        private string _lastUserRegion = "";
+        public string LastUserRegion
+        {
+            get => _lastUserRegion;
+            set => SetProperty(ref _lastUserRegion, value);
+        }
 
         private RegionSelectionMode _regionSelectionMode;
 

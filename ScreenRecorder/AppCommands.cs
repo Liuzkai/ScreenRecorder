@@ -272,10 +272,9 @@ namespace ScreenRecorder
                                             displayDeviceName = result.DeviceName;
                                             region = result.Region;
 
-                                            region.Width = ((int)region.Width) & (~0x01);
-                                            region.Height = ((int)region.Height) & (~0x01);
-
-                                            if (region.Width < 100 || region.Height < 100)
+                                            var physicalRegion = ScreenRecorder.DirectX.MonitorInfo.GetMonitorInfo(displayDeviceName)
+                                                ?.VirtualToPhysical(region) ?? region;
+                                            if (physicalRegion.Width < 100 || physicalRegion.Height < 100)
                                             {
                                                 MessageBox.Show(ScreenRecorder.Properties.Resources.RegionSizeError,
                                                     AppConstants.AppName, MessageBoxButton.OK, MessageBoxImage.Error);

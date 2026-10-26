@@ -36,6 +36,35 @@ namespace ScreenRecorder.Region
         }
 
         public event RegionSelectedHandler RegionSelected;
+        public event EventHandler UserRegionChanged;
+        public event EventHandler UserRegionConfirmationRequested;
+        private System.Drawing.Rectangle _userRegion;
+        private System.Drawing.Rectangle _dragRegion;
+        private bool _movingRegion;
+        private System.Drawing.Size _physicalSize;
+        public System.Drawing.Rectangle UserRegion => _userRegion;
+        public System.Drawing.Size PhysicalSize => _physicalSize;
+
+        public void SetUserRegion(System.Drawing.Rectangle region)
+        {
+            _userRegion = UserRegionGeometry.Fit(region, _physicalSize);
+            UserRegionChanged?.Invoke(this, EventArgs.Empty);
+            InvalidateVisual();
+        }
+
+        public void ConfirmUserRegion()
+        {
+            if (RegionSelectionMode != RegionSelectionMode.UserRegion || IsMouseCaptured
+                || _userRegion.Width < UserRegionGeometry.MinimumSize || _userRegion.Height < UserRegionGeometry.MinimumSize)
+                return;
+            _selectionStarted = false;
+            RegionSelected?.Invoke(this, new RegionSelectedEventArgs(RegionSelectionMode, _deviceName,
+                _deviceBounds, GetUserRegion(), false));
+        }
+
+        private System.Drawing.Point ToPhysical(Point local) => new System.Drawing.Point(
+            (int)Math.Round(Math.Clamp(local.X / _deviceBounds.Width, 0, 1) * _physicalSize.Width),
+            (int)Math.Round(Math.Clamp(local.Y / _deviceBounds.Height, 0, 1) * _physicalSize.Height));
 
         #region Private Fields
         private Point _downPoint, _movePoint;   // desktop coordinates
@@ -49,17 +78,18 @@ namespace ScreenRecorder.Region
 
         public RegionSelector()
         {
-            Focusable = false;
+            Focusable = true;
             _downPoint = _movePoint = new Point(0, 0);
             _selectedTargetBounds = Rect.Empty;
             _windowRegions = WindowRegion.GetWindowRegions() ?? Array.Empty<WindowRegion>();
         }
 
         /// <summary>Binds this selector to the monitor its overlay window covers.</summary>
-        public void Attach(string deviceName, Rect deviceBounds)
+        public void Attach(string deviceName, Rect deviceBounds, System.Drawing.Size physicalSize)
         {
             _deviceName = deviceName;
             _deviceBounds = deviceBounds;
+            _physicalSize = physicalSize;
         }
 
         private Point ToDesktop(Point localPoint)
@@ -79,9 +109,10 @@ namespace ScreenRecorder.Region
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (!_selectionStarted)
+            if (!_selectionStarted || e.ChangedButton != MouseButton.Left)
                 return;
 
+            Focus();
             _downPoint = _movePoint = ToDesktop(e.GetPosition(this));
 
             CaptureMouse();
@@ -89,8 +120,15 @@ namespace ScreenRecorder.Region
             switch (RegionSelectionMode)
             {
                 case RegionSelectionMode.UserRegion:
-                    // The drag starts on this monitor and is clamped to it.
+                    // A drag inside moves the existing rectangle; outside draws a replacement.
                     _selectedTargetDevice = _deviceName;
+                    _dragRegion = _userRegion;
+                    _movingRegion = _userRegion.Contains(ToPhysical(e.GetPosition(this)));
+                    if (e.ClickCount == 2 && _movingRegion)
+                    {
+                        ReleaseMouseCapture();
+                        UserRegionConfirmationRequested?.Invoke(this, EventArgs.Empty);
+                    }
                     break;
                 case RegionSelectionMode.WindowRegion:
                 case RegionSelectionMode.DisplayRegion:
@@ -115,11 +153,9 @@ namespace ScreenRecorder.Region
             switch (RegionSelectionMode)
             {
                 case RegionSelectionMode.UserRegion:
-                    Cursor = Cursors.Cross;
+                    Cursor = _userRegion.Contains(ToPhysical(e.GetPosition(this))) ? Cursors.SizeAll : Cursors.Cross;
                     if (IsMouseCaptured)
-                    {
-                        InvalidateVisual();
-                    }
+                        UpdateUserDrag(e.GetPosition(this));
                     break;
                 case RegionSelectionMode.WindowRegion:
                     Cursor = Cursors.Arrow;
@@ -171,24 +207,24 @@ namespace ScreenRecorder.Region
 
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
-            if (!_selectionStarted)
+            if (!_selectionStarted || e.ChangedButton != MouseButton.Left || !IsMouseCaptured)
                 return;
+            if (RegionSelectionMode == RegionSelectionMode.UserRegion)
+                UpdateUserDrag(e.GetPosition(this));
+            ReleaseMouseCapture();
+        }
 
-            if (IsMouseCaptured)
+        private void UpdateUserDrag(Point local)
+        {
+            var start = ToPhysical(new Point(_downPoint.X - _deviceBounds.X, _downPoint.Y - _deviceBounds.Y));
+            var end = ToPhysical(local);
+            if (_movingRegion)
+                SetUserRegion(UserRegionGeometry.Move(_dragRegion, start, end, _physicalSize));
+            else
             {
-                ReleaseMouseCapture();
-
-                switch (RegionSelectionMode)
-                {
-                    case RegionSelectionMode.UserRegion:
-                        _selectionStarted = false;
-                        Rect userRegion = GetUserRegion();
-                        RegionSelected?.Invoke(this, new RegionSelectedEventArgs(RegionSelectionMode, _selectedTargetDevice, _deviceBounds, userRegion, !(userRegion.Width > 0 && userRegion.Height > 0)));
-                        break;
-                    case RegionSelectionMode.WindowRegion:
-
-                        break;
-                }
+                var region = UserRegionGeometry.Draw(start, end);
+                if (region.Width > 0 && region.Height > 0)
+                    SetUserRegion(region);
             }
         }
         #endregion
@@ -239,8 +275,12 @@ namespace ScreenRecorder.Region
 
         private Rect GetUserRegion()
         {
-            var selectorRegion = new Rect((int)Math.Min(_downPoint.X, _movePoint.X), (int)Math.Min(_downPoint.Y, _movePoint.Y), (int)Math.Abs(_downPoint.X - _movePoint.X), (int)Math.Abs(_downPoint.Y - _movePoint.Y));
-            return Rect.Intersect(_deviceBounds, selectorRegion);
+            if (_userRegion.Width <= 0 || _userRegion.Height <= 0)
+                return Rect.Empty;
+            double scaleX = _deviceBounds.Width / _physicalSize.Width;
+            double scaleY = _deviceBounds.Height / _physicalSize.Height;
+            return new Rect(_deviceBounds.X + _userRegion.X * scaleX, _deviceBounds.Y + _userRegion.Y * scaleY,
+                _userRegion.Width * scaleX, _userRegion.Height * scaleY);
         }
 
         #endregion
@@ -248,6 +288,7 @@ namespace ScreenRecorder.Region
         #region Public Methods
         public void StartSelection()
         {
+            if (IsMouseCaptured) ReleaseMouseCapture();
             _selectionStarted = true;
             _downPoint = _movePoint = new Point(0, 0);
             _selectedTargetBounds = Rect.Empty;

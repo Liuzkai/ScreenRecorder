@@ -17,6 +17,7 @@ namespace ScreenRecorder.Region
         private DispatcherFrame _frame;
         private bool _completed;
         private bool _syncingMode;
+        private bool _syncingRegion;
 
         /// <summary>Last active mode, persisted back to config by the caller.</summary>
         public RegionSelectionMode RegionSelectionMode { get; private set; }
@@ -46,9 +47,12 @@ namespace ScreenRecorder.Region
             if (_windows.Count == 0)
                 return false;
 
+            var initialWindow = _windows.FirstOrDefault(w => w.DeviceName == AppConfig.Instance.LastUserRegionDevice)
+                ?? _windows.FirstOrDefault(w => w.ShowsMenu) ?? _windows[0];
+            initialWindow.RestoreUserRegion(AppConfig.Instance.LastUserRegion);
             foreach (var window in _windows)
                 window.Show();
-            (_windows.FirstOrDefault(w => w.ShowsMenu) ?? _windows[0]).Activate();
+            initialWindow.Activate();
 
             _frame = new DispatcherFrame();
             Dispatcher.PushFrame(_frame);
@@ -73,6 +77,18 @@ namespace ScreenRecorder.Region
             {
                 _syncingMode = false;
             }
+        }
+
+        internal void OnUserRegionChanged(RegionSelectorWindow activeWindow)
+        {
+            if (_syncingRegion || activeWindow.UserRegion.IsEmpty) return;
+            _syncingRegion = true;
+            try
+            {
+                foreach (var window in _windows)
+                    if (window != activeWindow) window.ClearUserRegion();
+            }
+            finally { _syncingRegion = false; }
         }
 
         internal void Complete(RegionSelectionResult result)

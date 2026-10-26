@@ -482,5 +482,11 @@ namespace ScreenRecorder.Properties {
                 return ResourceManager.GetString("RecordDelay", resourceCulture);
             }
         }
+        public static string RegionEditHint => ResourceManager.GetString("RegionEditHint", resourceCulture);
+        public static string RegionWidth => ResourceManager.GetString("RegionWidth", resourceCulture);
+        public static string RegionHeight => ResourceManager.GetString("RegionHeight", resourceCulture);
+        public static string RegionApplySize => ResourceManager.GetString("RegionApplySize", resourceCulture);
+        public static string RegionConfirm => ResourceManager.GetString("RegionConfirm", resourceCulture);
+        public static string RegionSizeRange => ResourceManager.GetString("RegionSizeRange", resourceCulture);
     }
 }
