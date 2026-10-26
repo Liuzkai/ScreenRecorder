@@ -119,3 +119,40 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+
+  preview-release:
+    name: Publish preview download links
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified Windows packages
+        uses: actions/download-artifact@v4
+        with:
+          name: ScreenRecorder-win-x64-${{ github.run_number }}
+          path: dist
+
+      - name: Publish preview release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: preview-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Preview build ${{ github.run_number }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          body: |
+            Windows x64 preview build from `${{ github.ref_name }}`.
+
+            Commit: `${{ github.sha }}`
+            Build and test results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Download the Setup EXE to install, or the Portable ZIP to run without installation.
+            SHA256SUMS.txt contains the checksums for both packages.
+          files: |
+            dist/ScreenRecorder_Setup_v*.exe
+            dist/ScreenRecorder_v*_Portable.zip
+            dist/SHA256SUMS.txt

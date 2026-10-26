@@ -79,6 +79,8 @@ The **Windows Build** GitHub Actions workflow runs on branch pushes, pull reques
 
 After a successful run, open **Actions → Windows Build → the run → Artifacts** and download `ScreenRecorder-win-x64-<run number>`. It contains `ScreenRecorder_Setup_v<version>.exe`, `ScreenRecorder_v<version>_Portable.zip`, and `SHA256SUMS.txt`. Artifacts are retained for 14 days. No additional repository secrets are needed for these builds.
 
+Successful branch pushes and manual runs also publish these three files under **Releases → Preview build <run number>**, with direct download links. Pull requests only upload Actions artifacts. Preview releases use `preview-<run number>` tags and do not replace the latest stable release or submit to winget.
+
 The existing **Release** workflow still publishes a GitHub Release when an `X.Y.Z` tag is pushed; its winget submission requires the existing `WINGET_TOKEN` secret.
 
 ## 📦 Third party libraries

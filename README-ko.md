@@ -79,6 +79,8 @@ GitHub Actions의 **Windows Build** 워크플로는 브랜치 푸시, 풀 리퀘
 
 성공한 실행의 **Actions → Windows Build → 해당 실행 → Artifacts**에서 `ScreenRecorder-win-x64-<실행 번호>`를 받으세요. `ScreenRecorder_Setup_v<버전>.exe`, `ScreenRecorder_v<버전>_Portable.zip`, `SHA256SUMS.txt`가 포함되며 14일간 보관됩니다. 일반 빌드에는 추가 저장소 시크릿이 필요하지 않습니다.
 
+브랜치 푸시와 수동 실행이 성공하면 **Releases → Preview build <실행 번호>**에도 같은 세 파일의 직접 다운로드 링크가 게시됩니다. 풀 리퀘스트는 Actions 아티팩트만 업로드합니다. 미리 보기 릴리스는 `preview-<실행 번호>` 태그를 사용하며 최신 안정 릴리스를 대체하거나 winget에 등록하지 않습니다.
+
 기존 **Release** 워크플로는 `X.Y.Z` 태그 푸시 시 GitHub Release를 게시합니다. winget 등록에는 기존 `WINGET_TOKEN` 시크릿이 필요합니다.
 
 ## 📦 서드 파티 라이브러리
