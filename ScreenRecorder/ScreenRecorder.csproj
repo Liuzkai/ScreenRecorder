@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ScreenRecorder.Engine\ScreenRecorder.Engine.csproj" />
+    <InternalsVisibleTo Include="ScreenRecorder.DesktopTests" />
   </ItemGroup>
 
   <ItemGroup>

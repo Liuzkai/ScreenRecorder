@@ -49,6 +49,12 @@ namespace ScreenRecorder
         }
 
         private ScreenEncoder _screenEncoder;
+        private Region.RecordingRegionIndicator _recordingRegionIndicator;
+
+        internal void ShowRecordingRegion(string deviceName, System.Windows.Rect region) =>
+            _recordingRegionIndicator.Show(deviceName, region);
+
+        internal void HideRecordingRegion() => _recordingRegionIndicator?.Hide();
 
         public ScreenEncoder ScreenEncoder
         {
@@ -151,6 +157,7 @@ namespace ScreenRecorder
                 return;
 
             ScreenEncoder = new ScreenEncoder();
+            _recordingRegionIndicator = new Region.RecordingRegionIndicator(ScreenEncoder);
             EncoderFormats = new EncoderFormat[]
             {
                 // recording
@@ -236,6 +243,8 @@ namespace ScreenRecorder
             if (!IsInitialized)
                 return;
 
+            _recordingRegionIndicator?.Dispose();
+            _recordingRegionIndicator = null;
             _screenEncoder?.Dispose();
             _screenEncoder = null;
 

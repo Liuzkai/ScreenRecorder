@@ -9,6 +9,16 @@ dotnet run --project ScreenRecorder.RegionTests/ScreenRecorder.RegionTests.cspro
 The console runner exits nonzero on failure and prints the executed check count.
 It links the production geometry code; it does not simulate WPF input or Windows capture.
 
+The Windows runner also exercises real desktop border windows:
+
+```powershell
+dotnet run --project ScreenRecorder.DesktopTests/ScreenRecorder.DesktopTests.csproj -c Release
+```
+
+These checks verify physical placement, dashed rendering, mouse pass-through styles,
+capture exclusion (or safe placement outside the capture), focus, pause/resume, stop,
+and cancellation/shutdown cleanup. Full WGC screen capture still needs the interaction checks below.
+
 Windows interaction checks (required before shipping):
 
 - Open custom region selection with no saved region: a centered 640 × 320 pixel frame appears.

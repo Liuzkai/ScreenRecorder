@@ -7,5 +7,6 @@
   <ItemGroup>
     <!-- Exercise the actual geometry/settings implementation without Windows desktop APIs. -->
     <Compile Include="../ScreenRecorder/Region/UserRegionGeometry.cs" Link="UserRegionGeometry.cs" />
+    <Compile Include="../ScreenRecorder/Region/RecordingRegionGeometry.cs" Link="RecordingRegionGeometry.cs" />
   </ItemGroup>
 </Project>

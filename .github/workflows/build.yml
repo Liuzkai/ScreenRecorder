@@ -64,6 +64,9 @@ jobs:
       - name: Build solution
         run: dotnet build ScreenRecorder.sln -c Release
 
+      - name: Verify recording border on the Windows desktop
+        run: dotnet run --project ScreenRecorder.DesktopTests/ScreenRecorder.DesktopTests.csproj -c Release
+
       - name: Run software encoder smoke test
         run: |
           dotnet run --project ScreenRecorder.EncoderHarness/ScreenRecorder.EncoderHarness.csproj -c Release --no-build -- --hw sw --seconds 1 --w 640 --h 320 --out "$env:RUNNER_TEMP/encoder-smoke.mp4"

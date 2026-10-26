@@ -36,6 +36,7 @@ It is a simple recording program with the ability to record the screen.
     - Capture Region, Capture Window, Capture Display
   - Custom regions support dragging to draw, dragging inside the frame to move, and entering width/height in physical pixels (minimum 100 × 100). Apply the size, then confirm with the button, Enter, or a double-click inside the frame; Esc cancels. Enter in a size field only applies the size.
   - The last confirmed custom region's monitor, position and size are restored, including after restarting. First use defaults to a centered 640 × 320 frame; saved regions are fitted to the available display if the monitor or resolution changes.
+  - After confirming a custom region, a click-through black-and-white dashed outline marks the recording boundary during countdown, recording, and pause. It closes on stop or cancellation. The outline is excluded from capture on Windows 10 2004+; if exclusion is unavailable it stays outside the recorded pixels.
 - Recording function using hotkeys.
 - Microphone recording function (Record system default capture device)
 - By default, the recording frame rate is 60 fps.

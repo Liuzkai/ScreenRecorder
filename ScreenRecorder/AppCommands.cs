@@ -178,6 +178,8 @@ namespace ScreenRecorder
             if (_isDisposed)
                 return;
 
+            _recordDelayCts?.Cancel();
+            AppManager.Instance.HideRecordingRegion();
             _configFileSaveWorker?.Dispose();
             _configFileSaveWorker = null;
 
@@ -248,6 +250,7 @@ namespace ScreenRecorder
                                 AppConfig.Instance.SelectedRecordAudioCodec : MediaEncoder.AudioCodec.Aac;
                             var displayDeviceName = o is string target ? target : AppConfig.Instance.ScreenCaptureMonitor;
                             var region = new Rect(0, 0, double.MaxValue, double.MaxValue);
+                            bool showRegionBorder = false;
 
                             switch (displayDeviceName)
                             {
@@ -271,6 +274,7 @@ namespace ScreenRecorder
                                         {
                                             displayDeviceName = result.DeviceName;
                                             region = result.Region;
+                                            showRegionBorder = regionSelectorSession.RegionSelectionMode == Region.RegionSelectionMode.UserRegion;
 
                                             var physicalRegion = ScreenRecorder.DirectX.MonitorInfo.GetMonitorInfo(displayDeviceName)
                                                 ?.VirtualToPhysical(region) ?? region;
@@ -292,6 +296,19 @@ namespace ScreenRecorder
 
                             // Pre-record countdown (#56): shown in the elapsed-time display,
                             // cancelled by the stop command.
+                            if (showRegionBorder)
+                            {
+                                try
+                                {
+                                    AppManager.Instance.ShowRecordingRegion(displayDeviceName, region);
+                                }
+                                catch
+                                {
+                                    MessageBox.Show(Properties.Resources.FailedToStartRecording,
+                                        AppConstants.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
+                                    return;
+                                }
+                            }
                             int delaySeconds = AppConfig.Instance.SelectedRecordDelay;
                             if (delaySeconds > 0)
                             {
@@ -306,6 +323,7 @@ namespace ScreenRecorder
                                 }
                                 catch (OperationCanceledException)
                                 {
+                                    AppManager.Instance.HideRecordingRegion();
                                     return;
                                 }
                                 finally
@@ -319,6 +337,7 @@ namespace ScreenRecorder
                                 if (AppManager.Instance.ScreenEncoder == null ||
                                     AppManager.Instance.ScreenEncoder.Status != Encoder.EncoderStatus.Stop)
                                 {
+                                    AppManager.Instance.HideRecordingRegion();
                                     return;
                                 }
                             }
@@ -341,6 +360,7 @@ namespace ScreenRecorder
                             }
                             catch
                             {
+                                AppManager.Instance.HideRecordingRegion();
                                 MessageBox.Show(Properties.Resources.FailedToStartRecording,
                                     AppConstants.AppName,
                                     MessageBoxButton.OK, MessageBoxImage.Error);
